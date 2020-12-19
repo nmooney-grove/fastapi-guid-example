@@ -1,0 +1,1 @@
+"""FastAPI GUID Example."""

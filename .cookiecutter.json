@@ -1,0 +1,10 @@
+{
+  "_template": "gh:cjolowicz/cookiecutter-hypermodern-python",
+  "author": "Nate Mooney",
+  "email": "nate.k.mooney@gmail.com",
+  "friendly_name": "FastAPI GUID Example",
+  "github_user": "nbrengle",
+  "package_name": "fastapi_guid_example",
+  "project_name": "fastapi-guid-example",
+  "version": "0.0.0"
+}
