@@ -7,9 +7,6 @@ FastAPI GUID Example
 
 |pre-commit| |Black|
 
-.. |PyPI| image:: https://img.shields.io/pypi/v/fastapi-guid-example.svg
-   :target: https://pypi.org/project/fastapi-guid-example/
-   :alt: PyPI
 .. |Python Version| image:: https://img.shields.io/pypi/pyversions/fastapi-guid-example
    :target: https://pypi.org/project/fastapi-guid-example
    :alt: Python Version
