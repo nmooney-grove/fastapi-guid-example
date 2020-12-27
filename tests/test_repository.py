@@ -1,5 +1,7 @@
-import uuid
+# pylint: disable=redefined-outer-name
 from datetime import datetime
+import uuid
+
 
 import pytest
 
@@ -23,4 +25,4 @@ async def test_get(sqlalchemy_repo):
         "expires": datetime.fromtimestamp(1545730073),
     }
     result = await sqlalchemy_repo.add(entry_)
-    assert result == Entry(**entry_)
+    assert result == Entry.from_dict(entry_)
