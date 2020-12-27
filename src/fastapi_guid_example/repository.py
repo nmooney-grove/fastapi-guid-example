@@ -9,7 +9,7 @@ import databases
 import sqlalchemy
 import sqlalchemy_utils
 
-from . types import Entry
+from .types import Entry
 
 # TODO get this from env!
 # DATABASE_URL = "postgresql://user:password@postgresserver/db"
@@ -18,8 +18,8 @@ DATABASE_URL = "sqlite:///./test.db"
 
 REDIS_URL = "redis://localhost"
 
-class AbstractRepository(abc.ABC):
 
+class AbstractRepository(abc.ABC):
     @abc.abstractmethod
     async def get(self, id_: UUID) -> Entry:
         ...
@@ -29,8 +29,8 @@ class AbstractRepository(abc.ABC):
         ...
 
     @abc.abstractmethod
-    #TODO params should probably be a typed dict, no?
-    async def add(self, params) -> Entry: # TODO define the inpute data obj!!!
+    # TODO params should probably be a typed dict, no?
+    async def add(self, params) -> Entry:  # TODO define the inpute data obj!!!
         ...
 
 
@@ -53,7 +53,6 @@ metadata.create_all(engine)
 
 
 class SQLAlchemyRepository(AbstractRepository):
-
     async def get(self, id_: UUID) -> Entry:
         # TODO error handling!
         query = entries.select().where(self.entries.c.id == id_)
@@ -75,7 +74,6 @@ class SQLAlchemyRepository(AbstractRepository):
 
 
 class RedisRepository(AbstractRepository):
-
     def __init__(self, settings):
         self.settings = settings
 
@@ -85,7 +83,7 @@ class RedisRepository(AbstractRepository):
     async def get(self, id_: UUID) -> Entry:
         # TODO handle absent redis
         # TODO this encoding might be right, but the object is wrong!
-        val = await self.redis.get(id_, encoding='utf-8')
+        val = await self.redis.get(id_, encoding="utf-8")
         return Entry(**val)
 
     async def delete(self, id_: UUID) -> None:
@@ -98,6 +96,7 @@ class RedisRepository(AbstractRepository):
         id_ = params.get("id_")
         val = await self.redis.set(id_, params)
         return Entry(**params)
+
 
 # TODO tear down methods
 # redis.close()

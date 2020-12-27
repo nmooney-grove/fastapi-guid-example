@@ -1,11 +1,11 @@
 import uuid
-import  datetime
+import datetime
 
 from dataclasses import dataclass
 
 
 @dataclass
-class Entry():
+class Entry:
     id_: uuid.UUID
     user: str
     expires: datetime.datetime

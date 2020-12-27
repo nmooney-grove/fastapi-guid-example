@@ -8,6 +8,7 @@ from fastapi_guid_example.repository import SQLAlchemyRepository
 
 # TODO id_ v. guid -- just use guid...
 
+
 @pytest.mark.asyncio
 @pytest.fixture
 async def sqlalchemy_repo():
@@ -19,7 +20,7 @@ async def test_get(sqlalchemy_repo):
     entry_ = {
         "id_": uuid.uuid4(),
         "user": "nate.k.mooney@gmail.com",
-        "expires": datetime.fromtimestamp(1545730073)
+        "expires": datetime.fromtimestamp(1545730073),
     }
     result = await sqlalchemy_repo.add(entry_)
     assert result == Entry(**entry_)
