@@ -1,11 +1,11 @@
-import uuid
 from datetime import datetime
 from typing import Optional
+import uuid
 
-import databases
-import sqlalchemy
 from fastapi import FastAPI
 from pydantic import BaseModel
+
+from repository import database
 
 
 class EntryIn(BaseModel):
@@ -36,8 +36,6 @@ async def shutdown():
 
 @app.post("/guid")
 async def create_new_entry():
-    # TODO generate new random GUID
-    # TODO timestamp_out_30_days if no timestamp
     # TODO store it in the db with metadata
     # TODO store in cache (clobber)
     # TODO return all metadata + guid
@@ -47,7 +45,6 @@ async def create_new_entry():
 @app.post("/guid/{guid}")
 async def modify_entry(guid):
     # TODO store the metadata in the db
-    # TODO timestamp_out_30_days if no timestamp
     # TODO the guid cannot be modified by this command
     # TODO store in cache (clobber)
     # TODO return all metadata + guid

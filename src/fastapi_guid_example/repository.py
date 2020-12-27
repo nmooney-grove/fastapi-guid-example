@@ -55,22 +55,23 @@ metadata.create_all(engine)
 class SQLAlchemyRepository(AbstractRepository):
     async def get(self, id_: UUID) -> Entry:
         # TODO error handling!
-        query = entries.select().where(self.entries.c.id == id_)
+        query = entries.select().where(entries.c.id == id_)
         val = await database.execute(query)
-        return Entry(**val)
+        return Entry.from_dict(val)
 
     async def delete(self, id_: UUID) -> None:
-        query = entries.delete(None).where(self.entries.c.id == id_)
+        query = entries.delete(None).where(entries.c.id == id_)
         # None param ^^^ is an artefact of https://github.com/sqlalchemy/sqlalchemy/issues/4656
         await database.execute(query)
 
+    # TODO params should be an Entry
     async def add(self, params) -> Entry:
         # TODO error handling
         # TODO ensure params is well formed
         query = entries.insert(None).values(params)
         # None param ^^^ is an artefact of https://github.com/sqlalchemy/sqlalchemy/issues/4656
         await database.execute(query)
-        return Entry(**params)
+        return Entry.from_dict(params)
 
 
 class RedisRepository(AbstractRepository):
@@ -84,7 +85,7 @@ class RedisRepository(AbstractRepository):
         # TODO handle absent redis
         # TODO this encoding might be right, but the object is wrong!
         val = await self.redis.get(id_, encoding="utf-8")
-        return Entry(**val)
+        return Entry.from_dict(val)
 
     async def delete(self, id_: UUID) -> None:
         # TODO handle absent redis
@@ -94,8 +95,8 @@ class RedisRepository(AbstractRepository):
         # TODO handle absent redis
         # TODO ensure params is well formed
         id_ = params.get("id_")
-        val = await self.redis.set(id_, params)
-        return Entry(**params)
+        await self.redis.set(id_, params)
+        return Entry.from_dict(params)
 
 
 # TODO tear down methods
