@@ -1,3 +1,4 @@
+"""Exercise repository implementations."""
 # pylint: disable=redefined-outer-name
 from datetime import datetime
 import uuid
@@ -14,11 +15,13 @@ from fastapi_guid_example.repository import SQLAlchemyRepository
 @pytest.mark.asyncio
 @pytest.fixture
 async def sqlalchemy_repo():
+    """Fixture for our SQL Alchemy Repo."""
     return SQLAlchemyRepository()
 
 
 @pytest.mark.asyncio
 async def test_get(sqlalchemy_repo):
+    """It should add an entry to the store and return an entry without error."""
     entry_ = {
         "id_": uuid.uuid4(),
         "user": "nate.k.mooney@gmail.com",
