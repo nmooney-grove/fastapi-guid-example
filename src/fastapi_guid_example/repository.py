@@ -9,6 +9,7 @@ from uuid import UUID
 import databases
 import sqlalchemy
 import sqlalchemy_utils
+import sqlite3
 
 from .types import Entry
 
@@ -81,16 +82,22 @@ class SQLAlchemyRepository(AbstractRepository):
         THIS IS A DESTRUCTIVE OPERATION. There's no way to recover deleted data.
         We DO NOT use soft deletes.
         """
-        query = entries.delete(None).where(entries.c.id == guid)
-        # None param ^^^ is an artefact of https://github.com/sqlalchemy/sqlalchemy/issues/4656
+        query = sqlalchemy.delete(entries).where(entries.c.guid == guid)
         await database.execute(query)
 
     async def add(self, entry: Entry) -> Entry:
         """Add an Entry to the DB. Returning the Entry."""
         params = entry.dict()
-        query = entries.insert(None).values(params)
-        # None param ^^^ is an artefact of https://github.com/sqlalchemy/sqlalchemy/issues/4656
-        await database.execute(query)
+        try:
+            insert = sqlalchemy.insert(entries).values(params)
+            await database.execute(insert)
+        except (sqlalchemy.exc.IntegrityError, sqlite3.IntegrityError):
+            # A mildly hackish way to language agnostically upsert, requires two passes
+            # Okay, extra hacky given that we also need sqlite3-specific expections
+            guid = params["guid"]
+            new_params = {k: v for k,v in params.items() if k != "guid"}
+            update = sqlalchemy.update(entries).where(entries.c.guid == guid).values(new_params)
+            await database.execute(update)
         return Entry.from_dict(params)
 
 

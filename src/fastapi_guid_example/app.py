@@ -66,13 +66,13 @@ async def retrieve_entry(guid):
 
 
 @app.post("/guid/{guid}")
-async def modify_entry(guid):
+async def modify_entry(guid, entry_in: EntryIn):
     """UPDATE endpoint for Entries / GUIDs."""
-    # TODO store the metadata in the db
-    # TODO the guid cannot be modified by this command
-    # TODO store in cache (clobber)
-    # TODO return all metadata + guid
-    return guid
+    entry_ = entry_in.dict()
+    entry_["guid"] = guid
+    entry = Entry.from_dict(entry_)
+    result = await repo.add(entry)
+    return result.dict(timestamp=True)
 
 
 @app.delete("/guid/{guid}")
