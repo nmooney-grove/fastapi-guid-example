@@ -8,7 +8,7 @@ from typing import Any
 from typing import Mapping
 import uuid
 
-from dataclasses import dataclass
+import dataclasses
 
 def _construct_datetime(data: Any) -> datetime:
     out = datetime.now() + timedelta(days=30)
@@ -20,13 +20,20 @@ def _construct_datetime(data: Any) -> datetime:
 
 
 
-@dataclass
+@dataclasses.dataclass
 class Entry:
     """Core data type. A generic mapping of a GUID to some metadata."""
 
-    id_: uuid.UUID
+    guid: uuid.UUID
     user: str
     expires: datetime
+
+    def dict(self, timestamp: bool = False):
+        """Return a dictionary representation of the Entry."""
+        out = dataclasses.asdict(self)
+        if timestamp:
+            out["expires"] = datetime.timestamp(out["expires"])
+        return out
 
     @staticmethod
     def from_dict(dict_: Mapping[str, Any]) -> "Entry":
@@ -36,12 +43,12 @@ class Entry:
         - Additional keys are ignored
         - Missing keys are replaced by defaults of varying quality
         """
-        id_ = dict_.get("id_", uuid.uuid4()) # Generate new random guid if not provided
+        guid = dict_.get("guid", uuid.uuid4()) # Generate new random guid if not provided
         user = dict_.get("user", "") # TODO not the best default for this
 
         expires_raw = dict_.get("expires")
         expires = _construct_datetime(expires_raw)
 
-        if not all([id_, user, expires]):
+        if not all([guid, user, expires]):
             raise ValueError() # TODO expanding this will make it more usable
-        return Entry(id_, user, expires)
+        return Entry(guid, user, expires)

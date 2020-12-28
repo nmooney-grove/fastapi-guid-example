@@ -3,6 +3,7 @@
 Here we define any repositories, associated data stores and access implementations.
 """
 import abc
+import os
 from uuid import UUID
 
 import databases
@@ -13,10 +14,7 @@ from .types import Entry
 
 # TODO get this from env!
 # DATABASE_URL = "postgresql://user:password@postgresserver/db"
-# if TESTING:
 DATABASE_URL = "sqlite:///./test.db"
-
-REDIS_URL = "redis://localhost"
 
 
 class AbstractRepository(abc.ABC):
@@ -28,30 +26,32 @@ class AbstractRepository(abc.ABC):
     """
 
     @abc.abstractmethod
-    async def get(self, id_: UUID) -> Entry:
+    async def get(self, guid: UUID) -> Entry:
         """How a repository returns a single Entry given its id."""
         ...
 
     @abc.abstractmethod
-    async def delete(self, id_: UUID) -> None:
+    async def delete(self, guid: UUID) -> None:
         """How a repository deletes an Entry given its id."""
         ...
 
     @abc.abstractmethod
-    # TODO params should probably be a typed dict, no?
-    async def add(self, params) -> Entry:  # TODO define the input data obj!!!
+    async def add(self, entry: Entry) -> Entry: 
         """How a repository adds an Entry to its backing data store."""
         ...
 
-
-database = databases.Database(DATABASE_URL)
+if os.getenv("TESTING"):
+    TEST_DATABASE_URL = "sqlite:///./test.db"
+    database = databases.Database(TEST_DATABASE_URL, force_rollback=True)
+else:
+    database = databases.Database(DATABASE_URL)
 
 metadata = sqlalchemy.MetaData()
 
 entries = sqlalchemy.Table(
     "entries",
     metadata,
-    sqlalchemy.Column("id_", sqlalchemy_utils.UUIDType, primary_key=True, unique=True),
+    sqlalchemy.Column("guid", sqlalchemy_utils.UUIDType, primary_key=True, unique=True),
     sqlalchemy.Column("user", sqlalchemy.String),
     sqlalchemy.Column("expires", sqlalchemy.DateTime),
 )
@@ -68,29 +68,30 @@ class SQLAlchemyRepository(AbstractRepository):
     Our primary data store.
     """
 
-    async def get(self, id_: UUID) -> Entry:
+    async def get(self, guid: UUID) -> Entry:
         """Query the DB for an Entry by id."""
         # TODO error handling!
-        query = entries.select().where(entries.c.id == id_)
+        query = entries.select().where(entries.c.id == guid)
         val = await database.execute(query)
         return Entry.from_dict(val)
 
-    async def delete(self, id_: UUID) -> None:
+    async def delete(self, guid: UUID) -> None:
         """Delete an entry in the DB.
 
         THIS IS A DESTRUCTIVE OPERATION. There's no way to recover deleted data.
         We DO NOT use soft deletes.
         """
-        query = entries.delete(None).where(entries.c.id == id_)
+        query = entries.delete(None).where(entries.c.id == guid)
         # None param ^^^ is an artefact of https://github.com/sqlalchemy/sqlalchemy/issues/4656
         await database.execute(query)
 
-    # TODO params should be an Entry
-    async def add(self, params) -> Entry:
+    async def add(self, entry: Entry) -> Entry:
         """Add an Entry to the DB. Returning the Entry."""
-        # TODO error handling
-        # TODO ensure params is well formed
+        params = entry.dict()
         query = entries.insert(None).values(params)
         # None param ^^^ is an artefact of https://github.com/sqlalchemy/sqlalchemy/issues/4656
         await database.execute(query)
         return Entry.from_dict(params)
+
+
+initialize_repo = SQLAlchemyRepository

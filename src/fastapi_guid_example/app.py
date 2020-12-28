@@ -2,14 +2,17 @@
 
 Here we describe routes, API data validation and HTTP error handling.
 """
+import uuid
 from datetime import datetime
 from typing import Optional
-import uuid
 
+import databases
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-import repository
+from . import repository
+from .types import Entry
+
 
 class EntryIn(BaseModel):
     """Minimum data for Entry requests."""
@@ -27,8 +30,8 @@ class EntryOut(BaseModel):
 
 
 app = FastAPI()
+repo: repository.AbstractRepository = repository.initialize_repo()
 database = repository.database
-
 
 @app.on_event("startup")
 async def startup():
@@ -43,11 +46,11 @@ async def shutdown():
 
 
 @app.post("/guid")
-async def create_new_entry():
+async def create_new_entry(entry_in: EntryIn):
     """CREATE endpoint for Entries / GUIDs."""
-    # TODO store it in the db with metadata
-    # TODO store in cache (clobber)
-    # TODO return all metadata + guid
+    entry = Entry.from_dict(entry_in.dict())
+    result = await repo.add(entry)
+    return result.dict(timestamp=True)
 
 
 @app.get("/guid/{guid}")
