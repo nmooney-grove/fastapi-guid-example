@@ -59,7 +59,7 @@ async def create_new_entry(entry_in: EntryIn):
 async def retrieve_entry(guid):
     """READ endpoint for Entries / GUIDs."""
     result = await repo.get(guid)
-    if result.is_valid():
+    if result and result.is_valid():
         return result.dict(timestamp=True)
     raise HTTPException(status_code=404, detail="GUID not found or expired")
 
@@ -73,9 +73,9 @@ async def modify_entry(guid, entry_in: EntryIn):
     return result.dict(timestamp=True)
 
 
-@app.delete("/guid/{guid}")
+@app.delete("/guid/{guid}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_entry(guid) -> None:
     """DELETE endpoint for Entries / GUIDs."""
-    # TODO remove the GUID and metadata from the db
-    guid += 1 # TODO JUNK
+    await repo.delete(guid)
+    # TODO some kind of error handling presumably
     return None

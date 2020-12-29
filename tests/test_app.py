@@ -13,7 +13,6 @@ from fastapi_guid_example.types import Entry
 
 client = TestClient(app)
 
-# TODO we gotta get to the test db somehow....
 
 def test_create_guid():
     """It should create an Entry / GUID and return 201."""
@@ -25,6 +24,7 @@ def test_create_guid():
     assert "guid" in response.json()
     assert response.json()["user"] == user
     assert response.json()["expires"] == expires
+
 
 @pytest.fixture
 @pytest.mark.asyncio
@@ -39,6 +39,7 @@ async def entry_in_db():
     val = await repo.add(entry)
     return val
 
+
 @pytest.fixture
 @pytest.mark.asyncio
 async def expired_entry():
@@ -50,6 +51,7 @@ async def expired_entry():
     entry = Entry.from_dict(entry_)
     val = await repo.add(entry)
     return val
+
 
 def test_update_guid(entry_in_db):
     """It should update an Entry / GUID and return 201."""
@@ -66,6 +68,7 @@ def test_update_guid(entry_in_db):
     assert response.json()["user"] == user
     assert response.json()["expires"] == new_expires
 
+
 def test_get_guid_happy(entry_in_db):
     "It should return an a 200 reply and a GUID with its metadata."""
     entry = entry_in_db
@@ -80,12 +83,34 @@ def test_get_guid_happy(entry_in_db):
     assert response.json()["user"] == user
     assert response.json()["expires"] == datetime.timestamp(expires)
 
-def test_get_guid_sad(expired_entry):
+
+def test_get_guid_does_not_exist():
+    """It should return a 404."""
+    guid = uuid.uuid4()
+
+    response = client.get(f"/guid/{guid}")
+    assert response.status_code == 404
+    assert "guid" not in response.json()
+
+
+def test_get_guid_expired(expired_entry):
     """It should return a 404."""
     entry = expired_entry
     guid = entry.guid
 
     response = client.get(f"/guid/{guid}")
-
     assert response.status_code == 404
     assert "guid" not in response.json()
+
+
+def test_delete_entry(entry_in_db):
+    """It should remove the entry, respond 204 and subsequent GET should 404."""
+    entry = entry_in_db
+    guid = entry.guid
+
+    initial_response = client.delete(f"/guid/{guid}")
+    assert initial_response.status_code == 204
+
+    second_response = client.get(f"/guid/{guid}")
+    assert second_response.status_code == 404
+    assert "guid" not in second_response.json()

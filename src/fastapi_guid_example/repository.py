@@ -4,6 +4,7 @@ Here we define any repositories, associated data stores and access implementatio
 """
 import abc
 import os
+from typing import Optional
 from uuid import UUID
 
 import databases
@@ -27,7 +28,7 @@ class AbstractRepository(abc.ABC):
     """
 
     @abc.abstractmethod
-    async def get(self, guid: UUID) -> Entry:
+    async def get(self, guid: UUID) -> Optional[Entry]:
         """How a repository returns a single Entry given its id."""
         ...
 
@@ -69,12 +70,13 @@ class SQLAlchemyRepository(AbstractRepository):
     Our primary data store.
     """
 
-    async def get(self, guid: UUID) -> Entry:
+    async def get(self, guid: UUID) -> Optional[Entry]:
         """Query the DB for an Entry by id."""
         # TODO error handling!
         query = entries.select().where(entries.c.guid == guid)
         val = await database.fetch_one(query)
-        return Entry(*val)
+        if val:
+            return Entry(*val)
 
     async def delete(self, guid: UUID) -> None:
         """Delete an entry in the DB.
