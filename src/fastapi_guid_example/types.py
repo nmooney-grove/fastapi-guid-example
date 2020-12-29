@@ -35,6 +35,10 @@ class Entry:
             out["expires"] = datetime.timestamp(out["expires"])
         return out
 
+    def is_valid(self) -> bool:
+        """Return True if the GUID is valid."""
+        return self.expires > datetime.now()
+
     @staticmethod
     def from_dict(dict_: Mapping[str, Any]) -> "Entry":
         """Given a dictionary, create an Entry.

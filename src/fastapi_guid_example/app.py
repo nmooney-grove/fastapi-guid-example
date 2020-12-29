@@ -8,6 +8,8 @@ from typing import Optional
 
 import databases
 from fastapi import FastAPI
+from fastapi import HTTPException
+from fastapi import status
 from pydantic import BaseModel
 
 from . import repository
@@ -31,7 +33,7 @@ class EntryOut(BaseModel):
 
 app = FastAPI()
 repo: repository.AbstractRepository = repository.initialize_repo()
-database = repository.database
+database: databases.Database = repository.database
 
 @app.on_event("startup")
 async def startup():
@@ -45,7 +47,7 @@ async def shutdown():
     await database.disconnect()
 
 
-@app.post("/guid")
+@app.post("/guid", status_code=status.HTTP_201_CREATED)
 async def create_new_entry(entry_in: EntryIn):
     """CREATE endpoint for Entries / GUIDs."""
     entry = Entry.from_dict(entry_in.dict())
@@ -56,16 +58,12 @@ async def create_new_entry(entry_in: EntryIn):
 @app.get("/guid/{guid}")
 async def retrieve_entry(guid):
     """READ endpoint for Entries / GUIDs."""
-    # TODO check if it's in the cache
-    # TODO read the entry from the db
-    # TODO check if it's timestamp is valid
-    # TODO if not return 404
-    # TODO if not delete timestamp?
-    # TODO return all metadata + guid
-    return guid
+    result = await repo.get(guid)
+    if result.is_valid():
+        return result.dict(timestamp=True)
+    raise HTTPException(status_code=404, detail="GUID not found or expired")
 
-
-@app.post("/guid/{guid}")
+@app.post("/guid/{guid}", status_code=status.HTTP_201_CREATED)
 async def modify_entry(guid, entry_in: EntryIn):
     """UPDATE endpoint for Entries / GUIDs."""
     entry_ = entry_in.dict()

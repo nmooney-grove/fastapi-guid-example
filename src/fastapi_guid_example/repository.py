@@ -72,9 +72,9 @@ class SQLAlchemyRepository(AbstractRepository):
     async def get(self, guid: UUID) -> Entry:
         """Query the DB for an Entry by id."""
         # TODO error handling!
-        query = entries.select().where(entries.c.id == guid)
-        val = await database.execute(query)
-        return Entry.from_dict(val)
+        query = entries.select().where(entries.c.guid == guid)
+        val = await database.fetch_one(query)
+        return Entry(*val)
 
     async def delete(self, guid: UUID) -> None:
         """Delete an entry in the DB.
